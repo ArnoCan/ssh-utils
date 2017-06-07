@@ -14,6 +14,10 @@ Current contained tools:
   The management of the parallel SSH access 
   by multiple agents, sessions, and keys.
 
+  Allows Sysadmins and DevOps to open additional terminals 
+  and easily attach them to a an arbitrary shared local 
+  ssh-agent.
+
 Install
 -------
 
@@ -38,7 +42,7 @@ Platforms
 Examples
 --------
 
-  - "ssh-agent-manage.sh -C"
+  - "ssh-agent-manage.sh -A"
 
     create an agent, calls 'ssh-agent'
 
@@ -69,6 +73,10 @@ Examples
   - "ssh-agent-manage.sh -K"
 
     kill a selected running agent
+
+  - ". ssh-agent-manage.sh -C"
+
+    clears current shell environment
 
   - "ssh-agent-manage.sh -h"
 
@@ -134,15 +142,11 @@ Versions and Releases
 
 * RELEASE: >         - Production: Stable and compatible continued development.
 
-**Current Release: 00.01.001 - Alpha:**
+**Current Release: 00.01.002 - Alpha:**
 
-This is the first public version:
+* Documentation enhancements.
 
-* Manage an arbitrary number of SSH stored IDs/keys.
-
-* Manage an arbitrary number of local SSH agents for 
-  the current shell/bash.
-
+* Some usability enhancements for third parties.
 
 Current test status:
 

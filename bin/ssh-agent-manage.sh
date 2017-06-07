@@ -3,7 +3,7 @@
 AUTHOR="Arno-Can Uestuensoez"
 LICENSE="Artistic-License-2.0 + Forced-Fairplay-Constraints"
 COPYRIGHT="Copyright (C) 2011,2012,2013,2017 Arno-Can Uestuensoez @Ingenieurbuero Arno-Can Uestuensoez"
-VERSION='0.0.1'
+VERSION='0.1.2'
 WWW='https://arnocan.wordpress.com'
 UUID='a8ecde1c-63a9-44b9-8ff0-6c7c54398565'
 #
@@ -105,7 +105,7 @@ OPTIONS:
         SSH_ADDONS_DIRS
 
   -A [<label>] | --add-agent[=<label>]
-     Creates a new agent
+     Creates a new agent.
 
   -C [<label>] | --clear-agent[=<label>]
      Cleares the assignment.
@@ -174,16 +174,20 @@ ENVIRONMENT:
 
 EXAMPLES:
 
-  ssh-agent-manage.sh -h   # help
-  ssh-agent-manage.sh -l   # list current agent
-  ssh-agent-manage.sh -L   # enumerate all stored keys
-  ssh-agent-manage.sh -P   # list running agents
-  ssh-agent-manage.sh -C   # create an agent
-  ssh-agent-manage.sh -K   # kill an agent
+  ssh-agent-manage.sh -l    # list keys of current agent
+  ssh-agent-manage.sh -L    # enumerate all stored keys
 
-  ssh-agent-manage.sh --de # show environment
+  ssh-agent-manage.sh -A    # create an agent
+  ssh-agent-manage.sh -K    # kill an agent
+  ssh-agent-manage.sh -P    # list running agents
 
-  ssh-agent-manage.sh -S   # select and set an agent 
+  ssh-agent-manage.sh --de  # show environment
+
+  . ssh-agent-manage.sh -S  # select and set an agent 
+  . ssh-agent-manage.sh -C  # clear current shell
+
+  ssh-agent-manage.sh -h    # help
+
 
 
 COPYRIGHT:
@@ -214,8 +218,10 @@ function printHelpShort () {
   -S [#index|<label>] | --set-agent[=#index|<label>]
   --display-env | --de
 
-  -h | --help
   -v | --verbose
+
+  -h (short)
+  -help | --help (detailed)
 
   Set for current shell with: '. set_ssh-agent.sh [OPTIONS]'
     SSH_AGENT_PID
@@ -231,7 +237,7 @@ EOF
 ###
 #
 [[ "X$1" == "X" ]]&&{
-	printHelp
+	printHelpShort
 	cat <<EOF
 
 ------------------------------
@@ -256,6 +262,7 @@ for a in $1;do
 			;;
 		"-C"|"--clear-agent")
 			CLEARAGENT=1
+			ENVIRONMENT=1
 			CHOICE=CLEARAGENT
 			;;
 		"-d"|"--delete")
@@ -569,6 +576,9 @@ function doit () {
 				unset ADDKEY
 				;;
 			ADDAGENT)
+				printIt ""
+				printIt "Create a new ssh-agent, requires '-S' for attachment."
+				printIt ""
 				ssh-agent
 				unset ADDAGENT
 				;;
