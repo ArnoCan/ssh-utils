@@ -38,45 +38,45 @@ Platforms
 Examples
 --------
 
-  ssh-agent-manage.sh -C
+  - "ssh-agent-manage.sh -C"
 
-  - create an agent, calls 'ssh-agent'
+    create an agent, calls 'ssh-agent'
 
-  ssh-agent-manage.sh --de 
+  - "ssh-agent-manage.sh --de" 
 
-  - show ssh call environment
+    show ssh call environment
 
-  ssh-agent-manage.sh -l   
+  - "ssh-agent-manage.sh -l"   
 
-  - list keys of current agent
+    list keys of current agent
 
-  ssh-agent-manage.sh -L
+  - "ssh-agent-manage.sh -L"
 
-  - enumerate all stored keys
+    enumerate all stored keys
 
-  ssh-agent-manage.sh -P
+  - "ssh-agent-manage.sh -P"
 
-  - list all local running agents
+    list all local running agents
 
-  . ssh-agent-manage.sh -S
+  - ". ssh-agent-manage.sh -S"
 
-  - select and set a local running agent 
+    select and set a local running agent 
 
-  **REMINDER**:
-    For setting of the environment of the current 
-    shell the 'source-call' variant is required.
+    **REMINDER**:
+      For setting of the environment of the current 
+      shell the 'source-call' variant is required.
 
-  ssh-agent-manage.sh -K
+  - "ssh-agent-manage.sh -K"
 
-  - kill a selected running agent
+    kill a selected running agent
 
-  ssh-agent-manage.sh -h
+  - "ssh-agent-manage.sh -h"
 
-  - short help
+    short help
 
-  ssh-agent-manage.sh -help
+  - "ssh-agent-manage.sh -help"
 
-  - detailed help
+    detailed help
 
 Documentation
 -------------
