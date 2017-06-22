@@ -42,25 +42,13 @@ Platforms
 Examples
 --------
 
-  - "ssh-agent-manage.sh -A"
-
-    create an agent, calls 'ssh-agent'
-
   - "ssh-agent-manage.sh --de" 
 
     show ssh call environment
 
-  - "ssh-agent-manage.sh -l"   
+  - "ssh-agent-manage.sh -A"
 
-    list keys of current agent
-
-  - "ssh-agent-manage.sh -L"
-
-    enumerate all stored keys
-
-  - "ssh-agent-manage.sh -P"
-
-    list all local running agents
+    create an agent, calls 'ssh-agent'
 
   - ". ssh-agent-manage.sh -S"
 
@@ -69,6 +57,27 @@ Examples
     **REMINDER**:
       For setting of the environment of the current 
       shell the 'source-call' variant is required.
+
+  - "ssh-agent-manage.sh --de" 
+
+    show ssh call environment, after setting the 
+    current agent by '-S'
+
+  - "ssh-agent-manage.sh -a"
+
+    adds a key to current agent
+
+  - "ssh-agent-manage.sh -p"   
+
+    list keys of current agent
+
+  - "ssh-agent-manage.sh -e"
+
+    enumerate all stored keys
+
+  - "ssh-agent-manage.sh -P"
+
+    list all local running agents
 
   - "ssh-agent-manage.sh -K"
 
@@ -142,11 +151,15 @@ Versions and Releases
 
 * RELEASE: >         - Production: Stable and compatible continued development.
 
-**Current Release: 00.01.002 - Alpha:**
+**Current Release: 00.01.006 - Alpha:**
+
+* Did some transformation for public quality.
 
 * Documentation enhancements.
 
-* Some usability enhancements for third parties.
+* Introduction of LABELS and NAMES as aliasses.
+
+* Added the helpers: ssh-pk-asn1.sh and ssh-pk-type.sh 
 
 Current test status:
 
