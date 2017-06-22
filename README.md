@@ -18,6 +18,10 @@ Current contained tools:
   and easily attach them to a an arbitrary shared local 
   ssh-agent.
 
+* ssh-pk-type.sh
+
+* ssh-pk-asn1.sh
+
 Install
 -------
 
