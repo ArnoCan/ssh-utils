@@ -3,7 +3,7 @@
 AUTHOR="Arno-Can Uestuensoez"
 LICENSE="Artistic-License-2.0 + Forced-Fairplay-Constraints"
 COPYRIGHT="Copyright (C) 2017 Arno-Can Uestuensoez @Ingenieurbuero Arno-Can Uestuensoez"
-VERSION='0.1.6'
+VERSION='0.1.7'
 DATE='2017-06-22'
 WWW='https://arnocan.wordpress.com'
 UUID='a8ecde1c-63a9-44b9-8ff0-6c7c54398565'
@@ -25,17 +25,19 @@ fi
 #
 # temp vars, unset at last
 #
-FSEP=';'
+FSEP=':'
 STATE=0
 ENVIRONMENT=0
 VERBOSE=0
 DEBUG=0
 TERSE=0
+LONG=0
 FORCE=0
 VERS=0
 LIST=0
 ENUMKEYS=0
 ENUMTYPE=0
+SORT=0
 DELETE=0
 SETAGENT=0
 AGENTIDX=''
@@ -178,6 +180,9 @@ OPTIONS:
      Kills agent, sets environment if active connection.
      The set of the environment requires 'source-call'.
 
+  -l | --long
+     Adds details to displayed information.
+
   -p | --list-loaded-keys
      Lists loaded keys of current agent.
 
@@ -192,6 +197,9 @@ OPTIONS:
 
   -s #index:<label> | --set-index=#index:<label>
      Assign a label to an index.
+
+  --sort
+     Sort output where applicable.
 
   -t <lifetime> | --lifetime[=<lifetime>]
 	 Lifetime for the loaded key, same syntax as with 'ssh-agent'.
@@ -269,6 +277,7 @@ function printHelpShort () {
   -f                  | --force
   -k [<name>]         | --kill-key[=<name>]
   -K [<label>]        | --kill-agent[=<label>]
+  -l                  | --long
   -p                  | --list-loaded-keys
   -P                  | --list-agent-processes
   -s #index:<label>   | --set-index=#index:<label>
@@ -276,6 +285,7 @@ function printHelpShort () {
   -t <lifetime>       | --lifetime[=<lifetime>]
 
   --de                | --display-env
+                        --sort
   --fs <sep>          | --filed-separator=<sep>
 
   -d                  | --debug
@@ -438,6 +448,14 @@ while [[ "X$1" != "X" ]];do
 				AGENTLABEL=$OPT
 			fi
 			;;
+		-l|--long)
+			LONG=1
+			if((TERSE==0));then 
+				[[ "${FSEP}" == ":" ]]&&{ FSEP='|' ; }
+			else
+				[[ "${FSEP}" == ":" ]]&&{ FSEP=';' ; }
+			fi
+			;;
 		-p|--list-loaded-keys)
 			LIST=1
 			CHOICE=LIST
@@ -501,10 +519,15 @@ while [[ "X$1" != "X" ]];do
 			;;
 
 
+		--sort)
+			SORT=1
+			;;
+
 		--display-env|--de|-de)
 			printEnv
 			STATE=1
 			;;
+
 		-h)
 			printHelpShort
 			STATE=1
@@ -523,6 +546,8 @@ while [[ "X$1" != "X" ]];do
 		-X|--terse)
 			VERBOSE=0
 			TERSE=1
+			LONG=1
+			[[ "${FSEP}" == ":" ]]&&{ FSEP=';' ; }
 			;;
 		-V|--version)
 			CHOICE=VERSION
@@ -678,7 +703,7 @@ function getAvailableKeys () {
     printItOptional "#"
     printItOptional "#Current available keys:"
     printItOptional "#SSH_ADDONS_DIRS=${SSH_ADDONS_DIRS}"
-    local C=0
+    local C=0 t='' ft=''
     OFS=$IFS
     IFS=" "
     for i in ${SSH_ADDONS_DIRS//:/ };do
@@ -691,22 +716,27 @@ function getAvailableKeys () {
 		if [ ! -d "$i" ];then
 			continue
 		fi
-		local ft
-		for f in $(find $i -exec file {} \; |awk -F':' '/key$/{printf("%s:%s\n",$1,$2);}'|sort);
+		export SORT
+		for f in $( ((SORT==0))&&{ find $i -type f  ; }||{ find $i -type f  | sort ; } ; );
         do
+			t=`$MYPATH/ssh-pk-type.sh $f 2>/dev/null`
+			if [[ $? != 0 ]];then
+				continue
+			fi
         	ft="${f##*:}"
         	case $ENUMTYPE in
         		2);;
-        		1)[[ "X${ft//public/}" == "X${ft}" ]]&&{ continue ; };;
-				*)[[ "X${ft//public/}" != "X${ft}" ]]&&{ continue ; };;
+        		1)[[ "X${t%pub}" == "X${t}" ]]&&{ continue ; };;
+				*)[[ "X${t%pub}" != "X${t}" ]]&&{ continue ; };;
         	esac
 
 			A[$C]=$((C/4))
-			A[$((C+1))]="$i"
-			F=${f%%:*}
-			F=${F#$i}
-			A[$((C+2))]="${F#/}"
+			f=${f%%:*}
+			F=${f#$i};F=${F##*/}
+			A[$((C+1))]="${F#/}"
+			A[$((C+2))]="$i"
             A[$((C+3))]="${f##*:}"
+            A[$((C+4))]="${ft}"
 			let C=C+4;
 		done
 		IFS=$OFS
@@ -724,36 +754,49 @@ function listAvailableKeys () {
     printIt
     printIt "Available keys:"
     printIt "==============="
-    nmax=0
+    local nmax=0
     for((n=0;n<_CMAX;n+=4));do
-		nx=${#A[$((n+2))]}
+		nx=${#A[$((n+1))]}
 		if((nmax<nx));then
 			nmax=$nx
 		fi
     done
+    local pmax=0
+    for((n=0;n<_CMAX;n+=4));do
+		nx=${#A[$((n+3))]}
+		if((pmax<nx));then
+			pmax=$nx
+		fi
+    done
 
 	if((TERSE!=0));then
-		printf "%s${FSEP}%s${FSEP}%s\n" idx path type
+		printf "%s${FSEP}%s${FSEP}%s${FSEP}%s${FSEP}%s\n" idx name path filepath type
 	fi
 
     for((n=0;n<_CMAX;n+=4));do
-		if [ "$LPATH" != "${A[$((n+1))]}" ];then
-			LPATH="${A[$((n+1))]}"
+		if [ "$LPATH" != "${A[$((n+2))]}" ];then
+			LPATH="${A[$((n+2))]}"
 			printIt
 			printIt "#*************"
 			printIt "#***In: $LPATH"
 			printIt "#"
 		fi
 		if [[ "X$_k" == "X" ]];then
-			d0="${A[$((n+2-4))]}"
-			d1="${A[$((n+2))]}"
-			if [ \( "${d0%%/*}" != "${d0}" -o  "${d1%%/*}" != "${d1}" \) -a  "${d0%%/*}" != "${d1%%/*}" ];then
-				printIt
-			fi
 			if((TERSE==0));then
-				printf "%3d: %-"${nmax}"s:%s\n" ${A[${n}]} ${A[$((n+2))]} "${A[$((n+3))]}"
+				if((LONG==0));then
+					printf "%3d${FSEP} %-"${nmax}"s${FSEP}%-"${pmax}"s${FSEP}%s\n" ${A[${n}]} ${A[$((n+1))]} "${A[$((n+3))]}" `${MYPATH}/ssh-pk-type.sh "${A[$((n+3))]}"`
+				else
+					local l=0 lmax=0
+					for((l=0;l<_CMAX;l+=4));do
+						nx=${#A[$((l+2))]}
+						if((lmax<nx));then
+							lmax=$nx
+						fi
+					done
+					printf "%3d${FSEP} %-"${nmax}"s${FSEP}%-"${lmax}"s${FSEP}%-"${pmax}"s${FSEP}%s\n" ${A[${n}]} ${A[$((n+1))]} "${A[$((n+2))]}" "${A[$((n+3))]}" `${MYPATH}/ssh-pk-type.sh "${A[$((n+3))]}"`
+				fi
 			else
-		 		printf "%d${FSEP}%s${FSEP}%s\n" ${A[${n}]} "${LPATH}/${A[$((n+2))]}" "${A[$((n+3))]## }"
+		 		printf "%d${FSEP}%s${FSEP}%s${FSEP}%s${FSEP}%s\n" ${A[${n}]} ${A[$((n+1))]} ${A[$((n+2))]} "${A[$((n+3))]}" "${A[$((n+4))]}"
 			fi
 		else
 			dx="${A[$((n+1))]}/${A[$((n+2))]}"
@@ -766,9 +809,9 @@ function listAvailableKeys () {
 				printIt
 			fi
 			if((TERSE==0));then
-				printf "%3d: %-"${nmax}"s:%s\n" ${A[${n}]} ${A[$((n+2))]} "${A[$((n+3))]}"
+				printf "%3d: %-"${nmax}"s:%s:%s:%s\n" ${A[${n}]} ${A[$((n+2))]} "${A[$((n+3))]}" "${A[$((n+3))]}" "${A[$((n+4))]}"
 			else
-				printf "%d${FSEP}%s${FSEP}%s\n" ${A[${n}]} "${LPATH}/${A[$((n+2))]}" "${A[$((n+3))]## }"
+				printf "%d${FSEP}%s${FSEP}%s${FSEP}%s${FSEP}%s\n" ${A[${n}]} "${LPATH}/${A[$((n+1))]}" "${LPATH}/${A[$((n+2))]}" "${A[$((n+3))]## }" "${A[$((n+4))]## }"
 			fi
 		fi
     done
@@ -862,7 +905,6 @@ function enumerateActiveLabels () {
 			smax=$nx
 		fi
     done
-    #nmax=${#L[@]}
     nmax=${_CMAX}
     if((TERSE==0));then
 		printf "%3s: %-"${smax}"s:%-5s:%s\n" idx pid label path
@@ -913,6 +955,13 @@ function getPid4Label () {
 }
 
 set -a B
+#
+# B[n]=<index>
+# B[n+1]=<file-pathname>
+# B[n+2]=<type>
+# B[n+3]=<finger-print>
+# B[n+4]=<#bsize>
+#
 function getBIdx4Key () {
 	local l=$1 lx=''
 	local i=0
@@ -953,13 +1002,9 @@ function getLoadedKeys () {
     OFS=$IFS
     IFS="
 "
-
-#    for f in $(ssh-add -l|sort);
     for f in $(ssh-add -l);
     do
-		if [ "${f#[0-9]}" == "$f" ];then
-			continue
-		fi
+		[[ "${f#[0-9]}" == "$f" ]]&&{ continue ; }
 		B[$C]=$((C/5))
 		B[$((C+4))]=${f%% *}
 		F=${f#* }
@@ -987,7 +1032,7 @@ function listLoadedKeys () {
     [[ "X${#L[@]}" == "X0" ]]&&getAgentLabels
     local PMAX=$?
 	if((TERSE!=0));then
-		printf "%s${FSEP}%s${FSEP}%s${FSEP}%s${FSEP}%s${FSEP}%s${FSEP}%s${FSEP}%s\n" idx pid usock kidx kpath ktype sdatetime ldatetime
+		printf "%s${FSEP}%s${FSEP}%s${FSEP}%s${FSEP}%s${FSEP}%s${FSEP}%s${FSEP}%s${FSEP}%s${FSEP}%s\n" idx pid usock kidx kpath ktype fingerp bsize startdatetime lifedatetime
     fi
     for((curx=0;curx<=PMAX;curx+=4));do
 		if((PMAX==curx&&_gap==-1));then
@@ -1020,9 +1065,9 @@ function listLoadedKeys () {
 		[[ -e "${sock}/st" ]]&&{ st=$(date --date=@`cat ${sock}/st` +%Y%m%d%H%M%S) ; }||st=0
 		if((TERSE==0));then
 			if [ "${_SSH_AGENT_PID}" != "${SSH_AGENT_PID}" ];then
-				printf "  agent(%d): %s:%s:%s:%s\n" ${P[${cur}]} `getLabel4Pid ${P[$((cur+1))]}` ${P[$((cur+1))]} $st ${P[$((cur+2))]}
+				printf "  agent(%d)${FSEP} %s${FSEP}%s${FSEP}%s${FSEP}%s\n" ${P[${cur}]} `getLabel4Pid ${P[$((cur+1))]}` ${P[$((cur+1))]} $st ${P[$((cur+2))]}
 			else
-				printf " *agent(%d): %s:%s:%s:%s\n" ${P[${cur}]} `getLabel4Pid ${P[$((cur+1))]}` ${P[$((cur+1))]} $st ${P[$((cur+2))]}
+				printf " *agent(%d): %s${FSEP}%s${FSEP}%s${FSEP}%s\n" ${P[${cur}]} `getLabel4Pid ${P[$((cur+1))]}` ${P[$((cur+1))]} $st ${P[$((cur+2))]}
 			fi
 			if((LMAX==0));then
 				printf "    %3s\n\n" "-"
@@ -1030,22 +1075,19 @@ function listLoadedKeys () {
 			fi
 		fi
 		for((n=0;n<LMAX;n+=5));do # keys for agent 'curx'
-			# d0="${B[$((n+1-5))]}"
-			# d1="${B[$((n+1))]}"
-			# if [ \( "${d0%%/*}" != "${d0}" -o  "${d1%%/*}" != "${d1}" \) -a  "${d0%%/*}" != "${d1%%/*}" ];then
-			# 	printIt
-			# fi
 			local tst=''
 			local lst=''
-
 			kn=${B[$((n+1))]##*/}
 			[[ -e "${sock}/keys/$kn/st" ]]&&{ tst=$(cat ${sock}/keys/$kn/st);st=$(date --date=@${tst} +%Y%m%d%H%M%S) ; }||st=0
 			[[ -e "${sock}/keys/$kn/lt" ]]&&{ tlt=$((tst+`cat ${sock}/keys/$kn/lt`));lt=$(date --date=@${tlt} +%Y%m%d%H%M%S) ; }||lt=0
 			if((TERSE==0));then
-				printf "    %3d: %-"${nmax}"s:%s:%s:%s\n" ${B[${n}]} ${B[$((n+1))]} ${B[$((n+2))]//[()]/} $st $lt
+				if((LONG==0));then
+					printf "    %3d: %-"${nmax}"s${FSEP}%s${FSEP}%s${FSEP}%s\n" ${B[${n}]} ${B[$((n+1))]} ${B[$((n+2))]//[()]/} $st $lt
+				else
+					printf "    %3d: %-"${nmax}"s${FSEP}%s${FSEP}%s${FSEP}%s${FSEP}%s${FSEP}%s${FSEP}%s\n" ${B[${n}]} ${B[$((n+1))]} ${B[$((n+2))]//[()]/} ${B[$((n+3))]}  ${B[$((n+4))]} $st $lt
+				fi
 			else
-				#FIXME: P-index
-				printf "%s${FSEP}%s${FSEP}%s${FSEP}%s${FSEP}%s${FSEP}%s${FSEP}%s${FSEP}%s\n" "${P[${n}]}" "${P[$((n+1))]}" "${P[$((n+2))]}" "${B[${n}]}" "${B[$((n+1))]}" "${B[$((n+2))]//[()]/}"  $st $lt
+				printf "%s${FSEP}%s${FSEP}%s${FSEP}%s${FSEP}%s${FSEP}%s${FSEP}%s${FSEP}%s${FSEP}%s${FSEP}%s\n" "${P[${cur}]}" "${P[$((cur+1))]}" "${P[$((cur+2))]}" "${B[${n}]}" "${B[$((n+1))]}" "${B[$((n+2))]//[()]/}" "${B[$((n+3))]}" "${B[$((n+4))]}"  $st $lt
 			fi
 		done
 		printIt
@@ -1387,4 +1429,4 @@ doit
 
 # clear temporary vars
 unset A B L P X PMAX AUTHOR LICENSE COPYRIGHT VERSION DATE WWW UUID STATE ENVIRONMENT VERBOSE DEBUG VERS LIST ENUMKEYS
-unset DELETE SETAGENT SETAGENTIDX ADDKEY KEYNAME ADDAGENT AGENTLABEL AGENTIDX LISAGENTPROCESSES EXIT CHOICE ARGS OFS LIFETIME
+unset SORT DELETE SETAGENT SETAGENTIDX ADDKEY KEYNAME ADDAGENT AGENTLABEL AGENTIDX LISAGENTPROCESSES EXIT CHOICE ARGS OFS LIFETIME

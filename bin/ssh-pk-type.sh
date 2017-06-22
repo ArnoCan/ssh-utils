@@ -3,8 +3,8 @@
 AUTHOR="Arno-Can Uestuensoez"
 LICENSE="Artistic-License-2.0 + Forced-Fairplay-Constraints"
 COPYRIGHT="Copyright (C) 2017 Arno-Can Uestuensoez @Ingenieurbuero Arno-Can Uestuensoez"
-VERSION='0.1.0'
-DATE='2017-06-11'
+VERSION='0.1.6'
+DATE='2017-06-22'
 WWW='https://arnocan.wordpress.com'
 UUID='a8ecde1c-63a9-44b9-8ff0-6c7c54398565'
 NICKNAME="Scotty"
@@ -145,25 +145,32 @@ _F=`file $_FI`
 _FT="${_F#$_FI: PEM}"
 _FT="${_FT## }"
 ((TERSE==1))&&{ _E=' -n ' ; }
-
+_FT=${_FT#*OpenSSH}
+_FT=${_FT## }
 case "$_FT" in
-	RSA*)((LONG==0))&&{ echo ${_E} RSA ; }||{ echo ${_E} $_F ; };; # RSA
-	DSA*)((LONG==0))&&{ echo ${_E} DSA ; }||{ echo ${_E} $_F ; };; # DSA
+	RSA*public*)((LONG==0))&&{ echo ${_E} RSApub ; }||{ echo ${_E} $_F ; };; # RSA-public
+	RSA*private*)((LONG==0))&&{ echo ${_E} RSApriv ; }||{ echo ${_E} $_F ; };; # RSA-private
+	DSA*public*)((LONG==0))&&{ echo ${_E} DSApub ; }||{ echo ${_E} $_F ; };; # DSA-public
+	DSA*private*)((LONG==0))&&{ echo ${_E} DSApriv ; }||{ echo ${_E} $_F ; };; # DSA-private
 	*)
 		_FT="${_FT#$_FI: }"
 		_FT="${_FT## }"
 		case "$_FT" in
 			ASCII*)
 				openssl ec -in "$_FI" -outform DER 2>/dev/null >/dev/null
-				if [[ $? == 0 ]];then  ((LONG==0))&&{ echo ${_E} ECDSA ; }||{ echo ${_E} $_F ; }; # ECDSA
+				if [[ $? == 0 ]];then  ((LONG==0))&&{ echo ${_E} ECDSApriv ; }||{ echo ${_E} $_F ; }; # ECDSA-private
 				else
-					echo "ERROR:Unknown type ${_FT%% *}:${_FI}" >&2
-					unset _FI _FT
-					exit 1
+					egrep -q '^ecdsa[-]' "$_FI" 2>/dev/null >/dev/null
+					if [[ $? == 0 ]];then  ((LONG==0))&&{ echo ${_E} ECDSApub ; }||{ echo ${_E} $_F ; }; # ECDSA-public
+					else
+						echo "ERROR:$LINENO:Unknown type ${_FT%% *}:${_FI}" >&2
+						unset _FI _FT
+						exit 1
+					fi
 				fi
 				;;
 			*)
-				echo "ERROR:Unknown type ${_FT%% *}:${_FI}" >&2
+				echo "ERROR:$LINENO:Unknown type ${_FT%% *}:${_FI}" >&2
 				unset _FI _FT
 				exit 1
 				;;

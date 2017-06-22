@@ -78,7 +78,8 @@ LICENSE:
 EOF
 }
 
-ASN1OPTS=" -a -z "
+#ASN1OPTS=" -a -z "
+ASN1OPTS=" -a "
 ARGS=$*
 while [[ "X$1" != "X" ]];do
     case $1 in
