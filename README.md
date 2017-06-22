@@ -4,18 +4,18 @@ ssh-utils
 Abstract
 --------
 
-The **ssh-utils package** provides tools and extensions for 
-the application of SSH. 
+The **ssh-utils package** provides tools and extensions for
+the application of SSH.
 
 Current contained tools:
 
 * ssh-agent-manage.sh
 
-  The management of the parallel SSH access 
+  The management of the parallel SSH access
   by multiple agents, sessions, and keys.
 
-  Allows Sysadmins and DevOps to open additional terminals 
-  and easily attach them to a an arbitrary shared local 
+  Allows Sysadmins and DevOps to open additional terminals
+  and easily attach them to a an arbitrary shared local
   ssh-agent.
 
 * ssh-pk-type.sh
@@ -25,11 +25,11 @@ Current contained tools:
 Install
 -------
 
-  The current version is just a bunch of tiny tools, 
+  The current version is just a bunch of tiny tools,
   designed for the expert user. Therefore currently
   there is some lack of comfort.
 
-  So unpack the archive and copy these into a 
+  So unpack the archive and copy these into a
   directory within your search path.
 
 Platforms
@@ -37,8 +37,8 @@ Platforms
 
   Requires bash and OpenSSH.
 
-  Tested for now on Linux only, may work for 
-  any Linux and Unix platform, including 
+  Tested for now on Linux only, may work for
+  any Linux and Unix platform, including
   Apple-MacOS.
 
   Should work on Windows platforms by Cygwin.
@@ -46,7 +46,7 @@ Platforms
 Examples
 --------
 
-  - "ssh-agent-manage.sh --de" 
+  - "ssh-agent-manage.sh --de"
 
     show ssh call environment
 
@@ -56,22 +56,22 @@ Examples
 
   - ". ssh-agent-manage.sh -S"
 
-    select and set a local running agent 
+    select and set a local running agent
 
     **REMINDER**:
-      For setting of the environment of the current 
+      For setting of the environment of the current
       shell the 'source-call' variant is required.
 
-  - "ssh-agent-manage.sh --de" 
+  - "ssh-agent-manage.sh --de"
 
-    show ssh call environment, after setting the 
+    show ssh call environment, after setting the
     current agent by '-S'
 
   - "ssh-agent-manage.sh -a"
 
     adds a key to current agent
 
-  - "ssh-agent-manage.sh -p"   
+  - "ssh-agent-manage.sh -p"
 
     list keys of current agent
 
@@ -157,15 +157,9 @@ Versions and Releases
 
 * RELEASE: >         - Production: Stable and compatible continued development.
 
-**Current Release: 00.01.006 - Alpha:**
+**Current Release: 00.01.007 - Alpha:**
 
-* Did some transformation for public quality.
-
-* Documentation enhancements.
-
-* Introduction of LABELS and NAMES as aliasses.
-
-* Added the helpers: ssh-pk-asn1.sh and ssh-pk-type.sh 
+* Added the distinction for private and public keys of RSA, DSA, and ECDSA.
 
 Current test status:
 
