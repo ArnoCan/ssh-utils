@@ -3,7 +3,7 @@
 AUTHOR="Arno-Can Uestuensoez"
 LICENSE="Artistic-License-2.0 + Forced-Fairplay-Constraints"
 COPYRIGHT="Copyright (C) 2017 Arno-Can Uestuensoez @Ingenieurbuero Arno-Can Uestuensoez"
-VERSION='0.1.8'
+VERSION='0.1.9'
 DATE='2017-06-22'
 WWW='https://arnocan.wordpress.com'
 UUID='a8ecde1c-63a9-44b9-8ff0-6c7c54398565'
@@ -973,6 +973,7 @@ function getBIdx4Key () {
 	for((i=0;i<bmax;i+=5));do
 		lx="${B[$((i+1))]##*/}"
     	[[ "$l" == "$lx" || "$l" == "${lx%.*}" ]]&&{ echo $((i/5)); return 0 ; }
+    	[[ -e "$l" || "$l" == "${B[$((i+1))]}" ]]&&{ echo $((i/5)); return 0 ; }
 	done
 	if [[ "X${l//[0-9]/}" == "X" ]];then
 		((X>=0&&X<bmax/5))&&{ echo $l; }
@@ -1255,7 +1256,7 @@ function doit () {
 				if((X1>=0&&X1<${#B[@]}));then
 
 					if((FORCE==0));then
-						echo "Selected: key[$X] = `getBKey4Idx $X`"
+						echo "Selected: key[$X1] = `getBKey4Idx $X1`"
 						Y=N
 						read -p "Continue[yN]:" Y
 						if [ "$Y" == y -o "$Y" == Y  ];then

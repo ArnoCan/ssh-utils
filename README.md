@@ -157,7 +157,7 @@ Versions and Releases
 
 * RELEASE: >         - Production: Stable and compatible continued development.
 
-**Current Release: 00.01.008 - Alpha:**
+**Current Release: 00.01.009 - Alpha:**
 
 * Some fixes introduced by introduction of LABELS.
   Promoting only serious because this is a prototype for feature evaluation,
