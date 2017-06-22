@@ -157,9 +157,12 @@ Versions and Releases
 
 * RELEASE: >         - Production: Stable and compatible continued development.
 
-**Current Release: 00.01.007 - Alpha:**
+**Current Release: 00.01.008 - Alpha:**
 
-* Added the distinction for private and public keys of RSA, DSA, and ECDSA.
+* Some fixes introduced by introduction of LABELS.
+  Promoting only serious because this is a prototype for feature evaluation,
+  to be replaced soon.
+  Anyhow, it is still production degree for enterprise environments.
 
 Current test status:
 

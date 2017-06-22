@@ -3,7 +3,7 @@
 AUTHOR="Arno-Can Uestuensoez"
 LICENSE="Artistic-License-2.0 + Forced-Fairplay-Constraints"
 COPYRIGHT="Copyright (C) 2017 Arno-Can Uestuensoez @Ingenieurbuero Arno-Can Uestuensoez"
-VERSION='0.1.7'
+VERSION='0.1.8'
 DATE='2017-06-22'
 WWW='https://arnocan.wordpress.com'
 UUID='a8ecde1c-63a9-44b9-8ff0-6c7c54398565'
@@ -107,6 +107,9 @@ Current SSH environment:
      SSH_TTY              = ${SSH_TTY}
      SSH_USE_STRONG_RNG   = ${SSH_USE_STRONG_RNG}
 
+Status ssh-keysign:
+
+   ffs.
 
 EOF
 }
@@ -284,9 +287,10 @@ function printHelpShort () {
   -S [#index|<label>] | --set-agent[=#index|<label>]
   -t <lifetime>       | --lifetime[=<lifetime>]
 
-  --de                | --display-env
-                        --sort
+  --sort
   --fs <sep>          | --filed-separator=<sep>
+
+  --de                | --display-env
 
   -d                  | --debug
   -v                  | --verbose
@@ -826,8 +830,7 @@ function searchAvailableKey () {
     local LPATH=""
     local nmax=0
     for((n=0;n<_CMAX;n+=4));do
-		local px=${A[$((n+1))]}/${A[$((n+2))]}
-
+		local px=${A[$((n+3))]}
 	    if [[ "X${px//$k/}" != "X$px" ]];then
 			echo  "$px"
 			printDebug "MATCH([$n]$k):$px"
@@ -1016,13 +1019,14 @@ function getLoadedKeys () {
 		let C=C+5;
     done
     IFS=$OFS
-    return $C
+    return $((C/5))
 }
 
 function listLoadedKeys () {
     local px=0 st='' lt='' sock='' _gap=-1 cur=0 curx=0 kn=''
     local _SSH_AGENT_PID=${SSH_AGENT_PID}
     local _SSH_AUTH_SOCK=${SSH_AUTH_SOCK}
+	local LMAX=-1
 
     printIt
     printIt "Loaded keys:"
@@ -1034,28 +1038,30 @@ function listLoadedKeys () {
 	if((TERSE!=0));then
 		printf "%s${FSEP}%s${FSEP}%s${FSEP}%s${FSEP}%s${FSEP}%s${FSEP}%s${FSEP}%s${FSEP}%s${FSEP}%s\n" idx pid usock kidx kpath ktype fingerp bsize startdatetime lifedatetime
     fi
-    for((curx=0;curx<=PMAX;curx+=4));do
-		if((PMAX==curx&&_gap==-1));then
+    local _PMAX=$((PMAX*4))
+    for((curx=0;curx<=_PMAX;curx+=4));do
+		if((_PMAX==curx&&_gap==-1));then
 			break
-		elif((PMAX==curx));then
+		elif((_PMAX==curx));then
 		    SSH_AGENT_PID=${_SSH_AGENT_PID}
 		    SSH_AUTH_SOCK=${_SSH_AUTH_SOCK}
 		    cur=$_gap
 			getLoadedKeys
+			LMAX=$?
 		elif [[ "X$_SSH_AUTHx_SOCK" == "X${P[$((curx+2))]}" ]];then
 			_gap=-$curx
 			continue
 		else
 		    cur=$curx
-			SSH_AGENT_PID=${P[$((cur+1))]}
-			SSH_AUTH_SOCK=${P[$((cur+2))]}
+			export SSH_AGENT_PID=${P[$((cur+1))]}
+			export SSH_AUTH_SOCK=${P[$((cur+2))]}
 			getLoadedKeys
+			LMAX=$?
 		fi
-		local LMAX=$?
 		local C=0;
 		local LPATH=""
-		local nmax=0
-		for((n=0;n<LMAX;n+=5));do
+		local nmax=0 _LMAX=$((LMAX*5))
+		for((n=0;n<_LMAX;n+=5));do
 			nx=${#B[$((n+1))]}
 			if((nmax<nx));then
 				nmax=$nx
@@ -1074,7 +1080,7 @@ function listLoadedKeys () {
 				continue
 			fi
 		fi
-		for((n=0;n<LMAX;n+=5));do # keys for agent 'curx'
+		for((n=0;n<_LMAX;n+=5));do # keys for agent 'curx'
 			local tst=''
 			local lst=''
 			kn=${B[$((n+1))]##*/}
@@ -1082,7 +1088,16 @@ function listLoadedKeys () {
 			[[ -e "${sock}/keys/$kn/lt" ]]&&{ tlt=$((tst+`cat ${sock}/keys/$kn/lt`));lt=$(date --date=@${tlt} +%Y%m%d%H%M%S) ; }||lt=0
 			if((TERSE==0));then
 				if((LONG==0));then
-					printf "    %3d: %-"${nmax}"s${FSEP}%s${FSEP}%s${FSEP}%s\n" ${B[${n}]} ${B[$((n+1))]} ${B[$((n+2))]//[()]/} $st $lt
+
+					local nn=0 nam=0 _NAM=${#B[@]}
+					for((nn=0;nn<_NAM;nn+=5));do
+						nx=${B[$((nn+1))]##*/}
+						nx=${#nx}
+						if((nam<nx));then
+							nam=$nx
+						fi
+					done
+					printf "    %3d: %-"${nam}"s${FSEP}%-"${nmax}"s${FSEP}%s${FSEP}%s${FSEP}%s\n" ${B[${n}]} ${B[$((n+1))]##*/} ${B[$((n+1))]} ${B[$((n+2))]//[()]/} $st $lt
 				else
 					printf "    %3d: %-"${nmax}"s${FSEP}%s${FSEP}%s${FSEP}%s${FSEP}%s${FSEP}%s${FSEP}%s\n" ${B[${n}]} ${B[$((n+1))]} ${B[$((n+2))]//[()]/} ${B[$((n+3))]}  ${B[$((n+4))]} $st $lt
 				fi
@@ -1155,12 +1170,12 @@ function doit () {
 						read -p "Select number($X):" X
 						[[ -z "$X" ]]&&X=0
 						if((X<CMAX));then
-							KEYNAME="${A[$((4*X+1))]}/${A[$((4*X+2))]}"
+							KEYNAME="${A[$((4*X+3))]}"
 							ssh-add ${LIFETIME:+ -t $LIFETIME} "${KEYNAME}"
-							mkdir "$sock/keys/${KEYNAME}"
-							echo $ut > $sock/keys/${KEYNAME}/st;
+							[[ ! -e "$sock/keys/${A[$((4*X+1))]}" ]]&&{ mkdir "$sock/keys/${A[$((4*X+1))]}"; }
+							echo $ut > $sock/keys/${A[$((4*X+1))]}/st;
 							[[ "X$LIFETIME" != "X" ]]&&{
-								echo $LIFETIME > "$sock/keys/${KEYNAME}/lt" ;
+								echo $LIFETIME > "$sock/keys/${A[$((4*X+1))]}/lt" ;
 							}
 						else
 							printError "Invalid value: $X>$CMAX"
