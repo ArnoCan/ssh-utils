@@ -107,23 +107,25 @@ For current documentation refer to the help:
 Project Data
 ------------
 
-* PROJECT: 'ssh-utils'
+* PROJECT:   ssh-utils
 
-* MISSION: Simplify the application of ssh.
+* MISSION:   Simplify the application of ssh.
 
-* VERSION: 00.01
+* VERSION:   00.01
 
-* RELEASE: 00.01
+* RELEASE:   00.01
 
-* NICKNAME: 'xxx'
+* NICKNAME:  Scotty
 
-* STATUS: alpha
+* MISSION:   Beam you up to, where ever you want.
 
-* AUTHOR: Arno-Can Uestuensoez
+* STATUS:    alpha
+
+* AUTHOR:    Arno-Can Uestuensoez
 
 * COPYRIGHT: Copyright (C) 2011,2012,2013,2017 Arno-Can Uestuensoez @Ingenieurbuero Arno-Can Uestuensoez
 
-* LICENSE: Artistic-License-2.0 + Forced-Fairplay-Constraints
+* LICENSE:   Artistic-License-2.0 + Forced-Fairplay-Constraints
   Refer to enclose documents:
 
   *  ArtisticLicense20.html - for base license: Artistic-License-2.0
