@@ -3,7 +3,7 @@
 AUTHOR="Arno-Can Uestuensoez"
 LICENSE="Artistic-License-2.0 + Forced-Fairplay-Constraints"
 COPYRIGHT="Copyright (C) 2017 Arno-Can Uestuensoez @Ingenieurbuero Arno-Can Uestuensoez"
-VERSION='0.1.9'
+VERSION='0.1.10'
 DATE='2017-06-22'
 WWW='https://arnocan.wordpress.com'
 UUID='a8ecde1c-63a9-44b9-8ff0-6c7c54398565'
@@ -1128,6 +1128,11 @@ function doit () {
 					STATE=1
 					return 1
 				fi
+				if [ ! -e "$SSH_AUTH_SOCK" ];then
+					printError "Missing, check and update SSH_AUTH_SOCK and SSH_AGENT_PID, see options '-P', '-S'"
+					STATE=1
+					return 1
+				fi
 
 	 			local sock=${SSH_AUTH_SOCK%/agent.*} #directory of udomain socket
 				[[ ! -e "$sock/keys" ]]&&{ mkdir "$sock/keys"; }
@@ -1149,12 +1154,23 @@ function doit () {
 							if [[ "X${_f#ssh-}" != "X${_f}" ]];then
 								printWarning "Ignored, seems to be a public key: $ki"
 							else
-								ssh-add ${LIFETIME:+-t $LIFETIME} ${ki}
-								[[ ! -e "$sock/keys/${KEYNAME}" ]]&&{ mkdir "$sock/keys/${KEYNAME}"; }
-								echo $ut > $sock/keys/${KEYNAME}/st;
-								[[ "X$LIFETIME" != "X" ]]&&{
-									echo $LIFETIME > "$sock/keys/${KEYNAME}/lt" ;
-								}
+
+								if((FORCE==0));then
+									echo "Selected: $ki"
+									Y=N
+									read -p "Continue[yN]:" Y
+									if [ "$Y" == y -o "$Y" == Y  ];then
+										FORCE=1
+									fi
+								fi
+								if((FORCE==1));then
+									ssh-add ${LIFETIME:+-t $LIFETIME} ${ki}
+									[[ ! -e "$sock/keys/${KEYNAME}" ]]&&{ mkdir "$sock/keys/${KEYNAME}"; }
+									echo $ut > $sock/keys/${KEYNAME}/st;
+									[[ "X$LIFETIME" != "X" ]]&&{
+										echo $LIFETIME > "$sock/keys/${KEYNAME}/lt" ;
+									}
+								fi
 							fi
 						else
 							printError "Invalid keyname: $KEYNAME"
@@ -1254,7 +1270,6 @@ function doit () {
 				local X1=`getBIdx4Key $X`
 				[[ -z "$X1" ]]&&X1=-1
 				if((X1>=0&&X1<${#B[@]}));then
-
 					if((FORCE==0));then
 						echo "Selected: key[$X1] = `getBKey4Idx $X1`"
 						Y=N
